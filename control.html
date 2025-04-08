@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .counter-controls {
+            display: flex;
+            justify-content: space-between;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button.subtract {
+            background-color: #f44336;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+</head>
+<body>
+    <h2>Control Widget</h2>
+    <label for="imageInput">Upload Picture:</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <label for="nameInput">Name:</label>
+    <input type="text" id="nameInput" placeholder="Enter name">
+    
+    <div class="counter-controls">
+        <div>
+            <label>Aces: <span id="acesVal">0</span></label>
+            <button onclick="updateCounter('aces', 1)">+1</button>
+            <button class="subtract" onclick="updateCounter('aces', -1)">-1</button>
+        </div>
+        <div>
+            <label>Dimes: <span id="dimesVal">0</span></label>
+            <button onclick="updateCounter('dimes', 1)">+1</button>
+            <button class="subtract" onclick="updateCounter('dimes', -1)">-1</button>
+        </div>
+    </div>
+    <div class="counter-controls">
+        <div>
+            <label>Assists: <span id="assistsVal">0</span></label>
+            <button onclick="updateCounter('assists', 1)">+1</button>
+            <button class="subtract" onclick="updateCounter('assists', -1)">-1</button>
+        </div>
+        <div>
+            <label>Kills: <span id="killsVal">0</span></label>
+            <button onclick="updateCounter('kills', 1)">+1</button>
+            <button class="subtract" onclick="updateCounter('kills', -1)">-1</button>
+        </div>
+    </div>
+    <button onclick="updateName()">Update Name</button>
+
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyAGVOVJgaVXF-P4kXgbfn_YkdGGpAYiGkE",
+  authDomain: "volleybal-url-widget-1.firebaseapp.com",
+  projectId: "volleybal-url-widget-1",
+  storageBucket: "volleybal-url-widget-1.firebasestorage.app",
+  messagingSenderId: "202591980134",
+  appId: "1:202591980134:web:128cd806cc5c2ec03fbba7"
+};
+        // Image upload
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                storage.ref('person/image').put(file).then(() => {
+                    storage.ref('person/image').getDownloadURL().then((url) => {
+                        alert('Image uploaded!');
+                    });
+                }).catch((error) => alert('Upload failed: ' + error));
+            }
+        });
+
+        // Update name
+        function updateName() {
+            const name = document.getElementById('nameInput').value;
+            database.ref('widget/name').set(name || "No Name");
+        }
+
+        // Update counters
+        function updateCounter(field, change) {
+            database.ref('widget/' + field).once('value').then((snapshot) => {
+                let current = snapshot.val() || 0;
+                current = Math.max(0, current + change); // Prevent negative
+                database.ref('widget/' + field).set(current);
+                document.getElementById(field + 'Val').innerText = current;
+            });
+        }
+
+        // Sync control values with database
+        ['aces', 'dimes', 'assists', 'kills'].forEach(field => {
+            database.ref('widget/' + field).on('value', (snapshot) => {
+                document.getElementById(field + 'Val').innerText = snapshot.val() || 0;
+            });
+        });
+    </script>
+</body>
+</html>
